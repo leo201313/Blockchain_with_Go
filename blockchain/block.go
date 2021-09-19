@@ -5,9 +5,11 @@ import (
 	"crypto/sha256"
 	"encoding/gob"
 	"log"
+	"time"
 )
 
 type Block struct {
+	Timestamp    int64
 	Hash         []byte
 	Transactions []*Transaction
 	PrevHash     []byte
@@ -15,7 +17,7 @@ type Block struct {
 }
 
 func CreateBlock(txs []*Transaction, prevHash []byte) *Block {
-	block := &Block{[]byte{}, txs, prevHash, 0}
+	block := &Block{time.Now().Unix(), []byte{}, txs, prevHash, 0}
 	// block.DeriveHash()
 	pow := NewProofOfWork(block)
 	nonce, hash := pow.Run()

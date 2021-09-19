@@ -5,7 +5,6 @@ import (
 	"crypto/sha256"
 	"encoding/gob"
 	"encoding/hex"
-	"fmt"
 	"log"
 )
 
@@ -17,14 +16,23 @@ type Transaction struct {
 	Outputs []TxOutput
 }
 
-func CoinbaseTx(toAddress, data string) *Transaction {
-	if data == "" {
-		data = fmt.Sprintf("Coins to %s", toAddress)
+func ToHexString(str string) []byte {
+	return []byte(str)
+}
+
+func CoinbaseTx(toAddress, signature, publickey []byte) *Transaction {
+	if bytes.Compare(signature, nil) == 0 {
+		signature = bytes.Join([][]byte{
+			ToHexString("Coins to "),
+			toAddress,
+		},
+			[]byte{},
+		)
 	}
 
-	txIn := TxInput{[]byte{}, -1, data}
+	txIn := TxInput{[]byte{}, -1, signature, publickey}
 
-	txOut := TxOutput{reward, toAddress}
+	txOut := TxOutput{reward, Address2PubHash(toAddress)}
 
 	tx := Transaction{nil, []TxInput{txIn}, []TxOutput{txOut}}
 
@@ -44,10 +52,10 @@ func (tx *Transaction) SetID() {
 }
 
 func (tx *Transaction) IsCoinbase() bool {
-	return len(tx.Inputs) == 1 && len(tx.Inputs[0].ID) == 0 && tx.Inputs[0].Out == -1
+	return len(tx.Inputs) == 1 && len(tx.Inputs[0].TxID) == 0 && tx.Inputs[0].Out == -1
 }
 
-func NewTransaction(from, to string, amount int, chain *BlockChain) *Transaction {
+func NewTransaction(from, to []byte, amount int, chain *BlockChain) *Transaction {
 	var inputs []TxInput
 	var outputs []TxOutput
 
@@ -62,15 +70,15 @@ func NewTransaction(from, to string, amount int, chain *BlockChain) *Transaction
 		Handle(err)
 
 		for _, out := range outs {
-			input := TxInput{txID, out, from}
+			input := TxInput{txID, out, []byte{}, from}
 			inputs = append(inputs, input)
 		}
 	}
 
-	outputs = append(outputs, TxOutput{amount, to})
+	outputs = append(outputs, TxOutput{amount, Address2PubHash(to)})
 
 	if acc > amount {
-		outputs = append(outputs, TxOutput{acc - amount, from})
+		outputs = append(outputs, TxOutput{acc - amount, Address2PubHash(from)})
 	}
 
 	tx := Transaction{nil, inputs, outputs}

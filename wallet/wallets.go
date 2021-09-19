@@ -65,8 +65,8 @@ func CreateWallets() (*Wallets, error) {
 	return &wallets, err
 }
 
-func (ws *Wallets) AddWallet() string {
-	wallet := MakeWallet()
+func (ws *Wallets) AddWallet(name string) string {
+	wallet := MakeWallet(name)
 	address := fmt.Sprintf("%s", wallet.Address())
 
 	ws.Wallets[address] = wallet
@@ -74,16 +74,41 @@ func (ws *Wallets) AddWallet() string {
 	return address
 }
 
-func (ws Wallets) GetWallet(address string) Wallet {
-	return *ws.Wallets[address]
+func (ws Wallets) GetWalletByAddress(address string) Wallet {
+	aimwallet, ok := ws.Wallets[address]
+	if ok != true {
+		log.Panic("Error: No Wallet with such Address!")
+
+	}
+
+	return *aimwallet
 }
 
-func (ws *Wallets) GetAllAddresses() []string {
+func (ws *Wallets) GetAllAddresses() ([]string, []string) {
 	var addresses []string
+	var nickname []string
 
-	for address := range ws.Wallets {
+	for address, wallet := range ws.Wallets {
 		addresses = append(addresses, address)
+		nickname = append(nickname, wallet.RefName)
 	}
-	return addresses
+	return addresses, nickname
 
+}
+
+func (ws *Wallets) GetWalletByName(name string) Wallet {
+	var aimwallet Wallet
+
+	empty := true
+	for _, wallet := range ws.Wallets {
+		if wallet.RefName == name {
+			aimwallet = *wallet
+			empty = false
+			break
+		}
+	}
+	if empty {
+		log.Panic("Error: No Wallet with such Name!")
+	}
+	return aimwallet
 }
