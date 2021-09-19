@@ -77,6 +77,7 @@ func InitBlockChain(address []byte) *BlockChain {
 	}
 
 	opts := badger.DefaultOptions(constcoe.DbPath)
+	opts.Logger = nil
 
 	db, err := badger.Open(opts)
 	Handle(err)
@@ -112,6 +113,7 @@ func ContinueBlockChain() *BlockChain {
 	var lastHash []byte
 
 	opts := badger.DefaultOptions(constcoe.DbPath)
+	opts.Logger = nil
 	db, err := badger.Open(opts)
 	Handle(err)
 
