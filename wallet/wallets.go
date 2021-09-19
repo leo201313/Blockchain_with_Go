@@ -8,9 +8,9 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
-)
 
-const walletFile = "./tmp/wallets.data"
+	"github.com/leo201313/Blockchain_with_Go/constcoe"
+)
 
 type Wallets struct {
 	Wallets map[string]*Wallet
@@ -26,20 +26,20 @@ func (ws *Wallets) SaveFile() {
 		log.Panic(err)
 	}
 
-	err = ioutil.WriteFile(walletFile, content.Bytes(), 0644)
+	err = ioutil.WriteFile(constcoe.WalletFile, content.Bytes(), 0644)
 	if err != nil {
 		log.Panic(err)
 	}
 }
 
 func (ws *Wallets) LoadFile() error {
-	if _, err := os.Stat(walletFile); os.IsNotExist(err) {
+	if _, err := os.Stat(constcoe.WalletFile); os.IsNotExist(err) {
 		return err
 	}
 
 	var wallets Wallets
 
-	fileContent, err := ioutil.ReadFile(walletFile)
+	fileContent, err := ioutil.ReadFile(constcoe.WalletFile)
 	if err != nil {
 		return err
 	}
@@ -61,6 +61,9 @@ func CreateWallets() (*Wallets, error) {
 	wallets := Wallets{}
 	wallets.Wallets = make(map[string]*Wallet)
 	err := wallets.LoadFile()
+	if os.IsNotExist(err) {
+		return &wallets, nil
+	}
 
 	return &wallets, err
 }
@@ -68,9 +71,7 @@ func CreateWallets() (*Wallets, error) {
 func (ws *Wallets) AddWallet(name string) string {
 	wallet := MakeWallet(name)
 	address := fmt.Sprintf("%s", wallet.Address())
-
 	ws.Wallets[address] = wallet
-
 	return address
 }
 

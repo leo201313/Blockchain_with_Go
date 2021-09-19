@@ -7,12 +7,9 @@ import (
 	"crypto/sha256"
 	"log"
 
+	"github.com/leo201313/Blockchain_with_Go/blockchain"
+	"github.com/leo201313/Blockchain_with_Go/constcoe"
 	"golang.org/x/crypto/ripemd160"
-)
-
-const (
-	ChecksumLength = 4
-	Version        = byte(0x00)
 )
 
 type Wallet struct {
@@ -49,12 +46,12 @@ func Checksum(ripeMdHash []byte) []byte {
 	firstHash := sha256.Sum256(ripeMdHash)
 	secondHash := sha256.Sum256(firstHash[:])
 
-	return secondHash[:ChecksumLength]
+	return secondHash[:constcoe.ChecksumLength]
 }
 
 func (w *Wallet) Address() []byte {
 	pubHash := PublicKeyHash(w.PublicKey)
-	versionedHash := append([]byte{Version}, pubHash...)
+	versionedHash := append([]byte{constcoe.Version}, pubHash...)
 	checksum := Checksum(versionedHash)
 	finalHash := append(versionedHash, checksum...)
 	address := base58Encode(finalHash)
@@ -65,4 +62,13 @@ func MakeWallet(name string) *Wallet {
 	privateKey, publicKey := NewKeyPair()
 	wallet := Wallet{name, privateKey, publicKey}
 	return &wallet
+}
+
+func (wt *Wallet) MakeTransaction(toaddress []byte, amount int, chain *blockchain.BlockChain) {
+	candidateblock, err := blockchain.CreateCandidateBlock()
+	if err != nil {
+		log.Panic(err)
+	}
+	candidateblock.AddTransaction(blockchain.NewTransaction(wt.Address(), toaddress, amount, chain, wt.PrivateKey))
+	candidateblock.SaveFile()
 }

@@ -2,18 +2,16 @@ package blockchain
 
 import (
 	"bytes"
+	"crypto/ecdsa"
 	"encoding/hex"
+	"errors"
 	"fmt"
+	"log"
 	"os"
 	"runtime"
 
 	"github.com/dgraph-io/badger"
-)
-
-const (
-	dbPath      = "./tmp/blocks"
-	dbFile      = "./tmp/blocks/MANIFEST"
-	genesisData = "First Transaction in Genesis"
+	"github.com/leo201313/Blockchain_with_Go/constcoe"
 )
 
 type BlockChain struct {
@@ -33,6 +31,14 @@ func DBexists(db string) bool {
 	return true
 }
 
+func (chain *BlockChain) RunMine() {
+	candidateBlock, err := CreateCandidateBlock()
+	Handle(err)
+	chain.AddBlock(candidateBlock.PubTx)
+	err = RemoveCandidateBlockFile()
+	Handle(err)
+}
+
 func (chain *BlockChain) AddBlock(transactions []*Transaction) {
 	var lastHash []byte
 
@@ -49,7 +55,7 @@ func (chain *BlockChain) AddBlock(transactions []*Transaction) {
 
 	Handle(err)
 
-	newBlock := CreateBlock(transactions, lastHash)
+	newBlock := CreateBlock(transactions, lastHash) // doing PoW
 
 	err = chain.Database.Update(func(transaction *badger.Txn) error {
 		err := transaction.Set(newBlock.Hash, newBlock.Serialize())
@@ -65,19 +71,19 @@ func (chain *BlockChain) AddBlock(transactions []*Transaction) {
 func InitBlockChain(address []byte) *BlockChain {
 	var lastHash []byte
 
-	if DBexists(dbFile) {
+	if DBexists(constcoe.DbFile) {
 		fmt.Println("blockchain already exists")
 		runtime.Goexit()
 	}
 
-	opts := badger.DefaultOptions(dbPath)
+	opts := badger.DefaultOptions(constcoe.DbPath)
 
 	db, err := badger.Open(opts)
 	Handle(err)
 
 	err = db.Update(func(txn *badger.Txn) error {
 
-		cbtx := CoinbaseTx(address, ToHexString(genesisData), []byte{})
+		cbtx := CoinbaseTx(address, ToHexString(constcoe.GenesisData), []byte{})
 		genesis := Genesis(cbtx)
 		fmt.Println("Genesis Created")
 		err = txn.Set(genesis.Hash, genesis.Serialize())
@@ -98,14 +104,14 @@ func InitBlockChain(address []byte) *BlockChain {
 }
 
 func ContinueBlockChain() *BlockChain {
-	if DBexists(dbFile) == false {
+	if DBexists(constcoe.DbFile) == false {
 		fmt.Println("No blockchain found, please create one first")
 		runtime.Goexit()
 	}
 
 	var lastHash []byte
 
-	opts := badger.DefaultOptions(dbPath)
+	opts := badger.DefaultOptions(constcoe.DbPath)
 	db, err := badger.Open(opts)
 	Handle(err)
 
@@ -248,4 +254,48 @@ Work:
 	}
 
 	return accumulated, unspentOuts
+}
+
+func (bc *BlockChain) FindTransaction(txID []byte) (Transaction, error) {
+	bIter := bc.Iterator()
+	for {
+		block := bIter.Next()
+
+		for _, tx := range block.Transactions {
+			if bytes.Equal(tx.ID, txID) {
+				return *tx, nil
+			}
+		}
+
+		if bytes.Equal(block.PrevHash, bc.BackOgPrevHash()) {
+			break
+		}
+	}
+
+	return Transaction{}, errors.New("Transaction is not found")
+}
+
+func (bc *BlockChain) SignTransaction(tx *Transaction, privKey ecdsa.PrivateKey) {
+	prevTXs := make(map[string]Transaction)
+	for _, input := range tx.Inputs {
+		prevTX, err := bc.FindTransaction(input.TxID)
+		if err != nil {
+			log.Panic(err)
+		}
+		prevTXs[hex.EncodeToString(prevTX.ID)] = prevTX
+	}
+	tx.Sign(privKey, prevTXs)
+}
+
+func (bc *BlockChain) VerifyTransaction(tx *Transaction) bool {
+	prevTXs := make(map[string]Transaction)
+	for _, input := range tx.Inputs {
+		prevTX, err := bc.FindTransaction(input.TxID)
+		if err != nil {
+			log.Panic(err)
+		}
+		prevTXs[hex.EncodeToString(prevTX.ID)] = prevTX
+	}
+
+	return tx.Verify(prevTXs)
 }

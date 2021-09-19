@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"log"
 
-	"github.com/leo201313/Blockchain_with_Go/wallet"
+	"github.com/leo201313/Blockchain_with_Go/constcoe"
 	"github.com/mr-tron/base58/base58"
 )
 
@@ -24,12 +24,6 @@ func (in *TxInput) CanUnlock(data string) bool {
 	return bytes.Compare(in.Sig, []byte(data)) == 0
 }
 
-func (in *TxInput) RightKey(pubkeyhash []byte) bool {
-	hashpubkey := wallet.PublicKeyHash([]byte(in.PubKey))
-	return bytes.Compare(hashpubkey, pubkeyhash) == 0
-
-}
-
 func (out *TxOutput) Lock(address []byte) {
 	out.HashPubKey = Address2PubHash(address)
 }
@@ -39,7 +33,7 @@ func Address2PubHash(address []byte) []byte {
 	if err != nil {
 		log.Panic(err)
 	}
-	pubKeyHash = pubKeyHash[1 : len(pubKeyHash)-wallet.ChecksumLength]
+	pubKeyHash = pubKeyHash[1 : len(pubKeyHash)-constcoe.ChecksumLength]
 	return pubKeyHash
 }
 

@@ -20,7 +20,7 @@ func (cli *CommandLine) printUsage() {
 	fmt.Println("--------------------------------------------------------------------------------------------------------------")
 	fmt.Println("All you need is to first create a wallet, and use the wallet address to init a blockchain.")
 	fmt.Println("Then, you can add more wallets and try to make some transactions use 'send'.")
-	fmt.Println("At this version, one block only contains one transaction. Also the mining is not considered yet.")
+	fmt.Println("At this version, one block can contain multiple transactions. You should run mine to add block.")
 	fmt.Println("The nickname of wallet is just used to refer the wallet instead of typing the full address.")
 	fmt.Println("Nothing left to say, wish you good luck.")
 	fmt.Println("--------------------------------------------------------------------------------------------------------------")
@@ -29,12 +29,16 @@ func (cli *CommandLine) printUsage() {
 	fmt.Println("walletinfo -nickname NICKNAME                 ----> Back all the information of a wallet")
 	fmt.Println("createblockchain -nickname NICKNAME           ----> Creates a blockchain using the name of the user's wallet")
 	fmt.Println("blockchaininfo                                ----> Prints the blocks in the chain")
-	fmt.Println("send -from FROMNAME -to TONAME -amount AMOUNT ----> Send amount of coins from one wallet address to another")
+	fmt.Println("send -from FROMNAME -to TONAME -amount AMOUNT ----> Make a transaction")
+	fmt.Println("mine                                          ----> Mine and add a block to the chain")
 	fmt.Println("--------------------------------------------------------------------------------------------------------------")
 }
 
 func (cli *CommandLine) createWallet(nickname string) {
-	wallets, _ := wallet.CreateWallets()
+	wallets, err := wallet.CreateWallets()
+	if err != nil {
+		log.Panic()
+	}
 	address := wallets.AddWallet(nickname)
 	wallets.SaveFile()
 	fmt.Printf("Owner:%s, New wallet address is:%s\n", nickname, address)
@@ -97,9 +101,16 @@ func (cli *CommandLine) send(from, to string, amount int) {
 	wallets, _ := wallet.CreateWallets()
 	fromwallet := wallets.GetWalletByName(from)
 	towallet := wallets.GetWalletByName(to)
-	tx := blockchain.NewTransaction(fromwallet.Address(), towallet.Address(), amount, chain)
-	chain.AddBlock([]*blockchain.Transaction{tx})
+	fromwallet.MakeTransaction(towallet.Address(), amount, chain)
 	fmt.Println("Success!")
+}
+
+func (cli *CommandLine) mine() {
+	chain := blockchain.ContinueBlockChain()
+	defer chain.Database.Close()
+	chain.RunMine()
+	fmt.Println("Finish Mining")
+
 }
 
 func (cli *CommandLine) validateArgs() {
@@ -118,6 +129,7 @@ func (cli *CommandLine) Run() {
 	createBlockChainCmd := flag.NewFlagSet("createblockchain", flag.ExitOnError)
 	blockChainInfoCmd := flag.NewFlagSet("blockchaininfo", flag.ExitOnError)
 	sendCmd := flag.NewFlagSet("send", flag.ExitOnError)
+	mineCmd := flag.NewFlagSet("mine", flag.ExitOnError)
 
 	createWalletName := createWalletCmd.String("nickname", "", "The name to refer the wallet")
 	walletInfoName := walletInfoCmd.String("nickname", "", "The name to refer the wallet")
@@ -154,6 +166,11 @@ func (cli *CommandLine) Run() {
 		}
 	case "send":
 		err := sendCmd.Parse(os.Args[2:])
+		if err != nil {
+			log.Panic(err)
+		}
+	case "mine":
+		err := mineCmd.Parse(os.Args[2:])
 		if err != nil {
 			log.Panic(err)
 		}
@@ -201,5 +218,9 @@ func (cli *CommandLine) Run() {
 
 	if blockChainInfoCmd.Parsed() {
 		cli.getBlockChainInfo()
+	}
+
+	if mineCmd.Parsed() {
+		cli.mine()
 	}
 }
