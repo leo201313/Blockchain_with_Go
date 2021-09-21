@@ -83,11 +83,15 @@ func (cli *CommandLine) getBlockChainInfo() {
 	ogprevhash := chain.BackOgPrevHash()
 	for {
 		block := iterator.Next()
+		fmt.Println("--------------------------------------------------------------------------------------------------------------")
+		fmt.Printf("Timestamp:%d\n", block.Timestamp)
+		fmt.Printf("Height:%d\n", block.Height)
 		fmt.Printf("Previous hash:%x\n", block.PrevHash)
 		fmt.Printf("Transactions:%v\n", block.Transactions)
 		fmt.Printf("hash:%x\n", block.Hash)
 		pow := blockchain.NewProofOfWork(block)
 		fmt.Printf("Pow: %s\n", strconv.FormatBool(pow.Validate()))
+		fmt.Println("--------------------------------------------------------------------------------------------------------------")
 		fmt.Println()
 		if bytes.Equal(block.PrevHash, ogprevhash) {
 			break

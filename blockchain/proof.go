@@ -32,7 +32,7 @@ func ToHexInt(num int64) []byte {
 	return buff.Bytes()
 }
 
-func (pow *ProofOfWork) InitNonce(nonce int) []byte {
+func (pow *ProofOfWork) InitNonce(nonce int64) []byte {
 	data := bytes.Join([][]byte{
 		pow.Block.PrevHash,
 		pow.Block.HashTransactions(),
@@ -44,11 +44,11 @@ func (pow *ProofOfWork) InitNonce(nonce int) []byte {
 	return data
 }
 
-func (pow *ProofOfWork) Run() (int, []byte) {
+func (pow *ProofOfWork) Run() (int64, []byte) {
 	var intHash big.Int
 	var hash [32]byte
-
-	nonce := 0
+	var nonce int64
+	nonce = 0
 
 	for nonce < math.MaxInt64 {
 		data := pow.InitNonce(nonce)

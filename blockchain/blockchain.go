@@ -31,15 +31,35 @@ func DBexists(db string) bool {
 	return true
 }
 
+func (chain *BlockChain) GetCurrentBlock() *Block {
+	var block *Block
+	err := chain.Database.View(func(txn *badger.Txn) error {
+
+		item, err := txn.Get(chain.LastHash)
+		Handle(err)
+
+		err = item.Value(func(val []byte) error {
+			block = Deserialize(val)
+			return nil
+		})
+		Handle(err)
+		return err
+	})
+
+	Handle(err)
+	return block
+}
+
 func (chain *BlockChain) RunMine() {
 	candidateBlock, err := CreateCandidateBlock()
 	Handle(err)
-	chain.AddBlock(candidateBlock.PubTx)
+	currentHeight := chain.GetCurrentBlock().Height + 1
+	chain.AddBlock(candidateBlock.PubTx, currentHeight)
 	err = RemoveCandidateBlockFile()
 	Handle(err)
 }
 
-func (chain *BlockChain) AddBlock(transactions []*Transaction) {
+func (chain *BlockChain) AddBlock(transactions []*Transaction, height uint32) {
 	var lastHash []byte
 
 	err := chain.Database.View(func(txn *badger.Txn) error {
@@ -50,18 +70,18 @@ func (chain *BlockChain) AddBlock(transactions []*Transaction) {
 			return nil
 		})
 		Handle(err)
+
 		return err
 	})
 
 	Handle(err)
 
-	newBlock := CreateBlock(transactions, lastHash) // doing PoW
+	newBlock := CreateBlock(transactions, lastHash, height) // doing PoW
 
 	err = chain.Database.Update(func(transaction *badger.Txn) error {
 		err := transaction.Set(newBlock.Hash, newBlock.Serialize())
 		Handle(err)
 		err = transaction.Set([]byte("lh"), newBlock.Hash)
-
 		chain.LastHash = newBlock.Hash
 		return err
 	})
