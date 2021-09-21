@@ -104,7 +104,7 @@ func InitBlockChain(address []byte) *BlockChain {
 
 	err = db.Update(func(txn *badger.Txn) error {
 
-		cbtx := CoinbaseTx(address, ToHexString(constcoe.GenesisData), []byte{})
+		cbtx := CoinbaseTx(address, []byte(constcoe.GenesisData), []byte{})
 		genesis := Genesis(cbtx)
 		fmt.Println("Genesis Created")
 		err = txn.Set(genesis.Hash, genesis.Serialize())

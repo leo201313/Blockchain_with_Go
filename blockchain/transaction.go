@@ -20,14 +20,10 @@ type Transaction struct {
 	Outputs []TxOutput
 }
 
-func ToHexString(str string) []byte {
-	return []byte(str)
-}
-
 func CoinbaseTx(toAddress, signature, publickey []byte) *Transaction {
 	if bytes.Compare(signature, nil) == 0 {
 		signature = bytes.Join([][]byte{
-			ToHexString("Coins to "),
+			[]byte("Coins to "),
 			toAddress,
 		},
 			[]byte{},
