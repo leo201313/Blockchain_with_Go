@@ -10,9 +10,9 @@ func (chain *BlockChain) RunMine() {
 	err = RemoveCandidateBlockFile()
 	Handle(err)
 
-	currentBlock := chain.GetCurrentBlock()
-	route, hashroute := currentBlock.MTree.BackValidationRoute(candidateBlock.PubTx[0].ID)
-	SPVwork := SimplePaymentValidation(candidateBlock.PubTx[0].ID, currentBlock.MTree.RootNode.Data, route, hashroute)
-	fmt.Println("Whether SPV works: ", SPVwork)
+	currentBlock := chain.GetCurrentBlock()                                                                            //Test SPV
+	route, hashroute := currentBlock.MTree.BackValidationRoute(candidateBlock.PubTx[0].ID)                             //Test SPV
+	SPVwork := SimplePaymentValidation(candidateBlock.PubTx[0].ID, currentBlock.MTree.RootNode.Data, route, hashroute) //Test SPV
+	fmt.Println("Whether SPV works: ", SPVwork)                                                                        //Test SPV
 
 }
