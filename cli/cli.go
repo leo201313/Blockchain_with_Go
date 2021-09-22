@@ -48,7 +48,7 @@ func (cli *CommandLine) listWallets() {
 	wallets, _ := wallet.CreateWallets()
 	address, names := wallets.GetAllAddresses()
 	for i := 0; i < len(address); i++ {
-		fmt.Printf("Wallet Address: %s , Reffered Name:%s\n", address[i], names[i])
+		fmt.Printf("Wallet Address: %s , Referred Name:%s\n", address[i], names[i])
 	}
 }
 
@@ -91,6 +91,7 @@ func (cli *CommandLine) getBlockChainInfo() {
 		fmt.Printf("hash:%x\n", block.Hash)
 		pow := blockchain.NewProofOfWork(block)
 		fmt.Printf("Pow: %s\n", strconv.FormatBool(pow.Validate()))
+		fmt.Printf("MerkleTreeRoot: %x\n", block.MTree.RootNode.Data)
 		fmt.Println("--------------------------------------------------------------------------------------------------------------")
 		fmt.Println()
 		if bytes.Equal(block.PrevHash, ogprevhash) {

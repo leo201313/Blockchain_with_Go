@@ -50,15 +50,6 @@ func (chain *BlockChain) GetCurrentBlock() *Block {
 	return block
 }
 
-func (chain *BlockChain) RunMine() {
-	candidateBlock, err := CreateCandidateBlock()
-	Handle(err)
-	currentHeight := chain.GetCurrentBlock().Height + 1
-	chain.AddBlock(candidateBlock.PubTx, currentHeight)
-	err = RemoveCandidateBlockFile()
-	Handle(err)
-}
-
 func (chain *BlockChain) AddBlock(transactions []*Transaction, height uint32) {
 	var lastHash []byte
 

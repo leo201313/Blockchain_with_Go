@@ -36,6 +36,7 @@ func (pow *ProofOfWork) InitNonce(nonce int64) []byte {
 	data := bytes.Join([][]byte{
 		pow.Block.PrevHash,
 		pow.Block.HashTransactions(),
+		pow.Block.MTree.RootNode.Data,
 		ToHexInt(int64(nonce)),
 		ToHexInt(int64(Difficulty)),
 	},

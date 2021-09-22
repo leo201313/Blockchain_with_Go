@@ -8,9 +8,11 @@
 * V1.1 Wallet module has been added, but it is not fully supported by the blockchain yet.
 * V1.2 Now you can use the wallet address to make TxOutputs. Also you can use wallet address to refer the transactions.
 * V1.5 There is a big jump in this version. Wallet module can be fully supported (Signature and Validation has been done), and even an API for the future mining functionality has been created.
+* V1.6 Now supports the Merkle Tree and SPV.
 
 
 ### Insight Future
+* Add UTXO sets to accelerate finding the spendable outputs instead of go through the whole blockchain.
 * Activate the mining mechanism locally.
 * Realize self-organization of network.
 * Realize the self-adaption of difficulty .

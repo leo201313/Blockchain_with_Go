@@ -15,10 +15,11 @@ type Block struct {
 	Transactions []*Transaction
 	PrevHash     []byte
 	Nonce        int64
+	MTree        *MerkleTree
 }
 
 func CreateBlock(txs []*Transaction, prevHash []byte, height uint32) *Block {
-	block := &Block{time.Now().Unix(), height, []byte{}, txs, prevHash, 0}
+	block := &Block{time.Now().Unix(), height, []byte{}, txs, prevHash, 0, CrateMerkleTree(txs)}
 
 	pow := NewProofOfWork(block)
 	nonce, hash := pow.Run()
