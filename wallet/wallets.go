@@ -113,3 +113,5 @@ func (ws *Wallets) GetWalletByName(name string) Wallet {
 	}
 	return aimwallet
 }
+
+// func

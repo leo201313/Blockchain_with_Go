@@ -4,8 +4,9 @@ import (
 	"bytes"
 	"crypto/sha256"
 	"encoding/gob"
-	"log"
 	"time"
+
+	"github.com/leo201313/Blockchain_with_Go/utils"
 )
 
 type Block struct {
@@ -34,17 +35,11 @@ func Genesis(coinbase *Transaction) *Block {
 	return CreateBlock([]*Transaction{coinbase}, originalByte, 0)
 }
 
-func Handle(err error) {
-	if err != nil {
-		log.Panic(err)
-	}
-}
-
 func (b *Block) Serialize() []byte {
 	var res bytes.Buffer
 	encoder := gob.NewEncoder(&res)
 	err := encoder.Encode(b)
-	Handle(err)
+	utils.Handle(err)
 
 	return res.Bytes()
 }
@@ -53,7 +48,7 @@ func Deserialize(data []byte) *Block {
 	var block Block
 	decoder := gob.NewDecoder(bytes.NewReader(data))
 	err := decoder.Decode(&block)
-	Handle(err)
+	utils.Handle(err)
 	return &block
 }
 

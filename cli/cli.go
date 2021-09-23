@@ -55,9 +55,13 @@ func (cli *CommandLine) listWallets() {
 func (cli *CommandLine) getWalletInfo(nickname string) {
 	wallets, _ := wallet.CreateWallets()
 	aimwallet := wallets.GetWalletByName(nickname)
+
 	address := aimwallet.Address()
 
 	chain := blockchain.ContinueBlockChain()
+	utxoset := aimwallet.CreateUTXOSet(chain)
+	fmt.Println("Test for UTXOSet, and the balance is: ", utxoset.GetBalance())
+	defer utxoset.DB.Close()
 	defer chain.Database.Close()
 	balance := 0
 	UTXOs := chain.FindUTXO(address)

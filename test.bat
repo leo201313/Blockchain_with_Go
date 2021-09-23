@@ -1,5 +1,6 @@
 rd /s /q tmp
 md tmp\blocks
+md tmp\wallets
 main.exe createwallet -nickname Leocao
 main.exe createwallet -nickname Krad
 main.exe listwallets

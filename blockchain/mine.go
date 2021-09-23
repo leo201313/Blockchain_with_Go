@@ -1,14 +1,18 @@
 package blockchain
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/leo201313/Blockchain_with_Go/utils"
+)
 
 func (chain *BlockChain) RunMine() {
 	candidateBlock, err := CreateCandidateBlock()
-	Handle(err)
+	utils.Handle(err)
 	currentHeight := chain.GetCurrentBlock().Height + 1
 	chain.AddBlock(candidateBlock.PubTx, currentHeight)
 	err = RemoveCandidateBlockFile()
-	Handle(err)
+	utils.Handle(err)
 
 	currentBlock := chain.GetCurrentBlock()                                                                            //Test SPV
 	route, hashroute := currentBlock.MTree.BackValidationRoute(candidateBlock.PubTx[0].ID)                             //Test SPV

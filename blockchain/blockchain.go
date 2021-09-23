@@ -6,12 +6,11 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"log"
-	"os"
 	"runtime"
 
 	"github.com/dgraph-io/badger"
 	"github.com/leo201313/Blockchain_with_Go/constcoe"
+	"github.com/leo201313/Blockchain_with_Go/utils"
 )
 
 type BlockChain struct {
@@ -24,29 +23,22 @@ type BlockChainIterator struct {
 	Database    *badger.DB
 }
 
-func DBexists(db string) bool {
-	if _, err := os.Stat(db); os.IsNotExist(err) {
-		return false
-	}
-	return true
-}
-
 func (chain *BlockChain) GetCurrentBlock() *Block {
 	var block *Block
 	err := chain.Database.View(func(txn *badger.Txn) error {
 
 		item, err := txn.Get(chain.LastHash)
-		Handle(err)
+		utils.Handle(err)
 
 		err = item.Value(func(val []byte) error {
 			block = Deserialize(val)
 			return nil
 		})
-		Handle(err)
+		utils.Handle(err)
 		return err
 	})
 
-	Handle(err)
+	utils.Handle(err)
 	return block
 }
 
@@ -55,34 +47,34 @@ func (chain *BlockChain) AddBlock(transactions []*Transaction, height uint32) {
 
 	err := chain.Database.View(func(txn *badger.Txn) error {
 		item, err := txn.Get([]byte("lh"))
-		Handle(err)
+		utils.Handle(err)
 		err = item.Value(func(val []byte) error {
 			lastHash = val
 			return nil
 		})
-		Handle(err)
+		utils.Handle(err)
 
 		return err
 	})
 
-	Handle(err)
+	utils.Handle(err)
 
 	newBlock := CreateBlock(transactions, lastHash, height) // doing PoW
 
 	err = chain.Database.Update(func(transaction *badger.Txn) error {
 		err := transaction.Set(newBlock.Hash, newBlock.Serialize())
-		Handle(err)
+		utils.Handle(err)
 		err = transaction.Set([]byte("lh"), newBlock.Hash)
 		chain.LastHash = newBlock.Hash
 		return err
 	})
-	Handle(err)
+	utils.Handle(err)
 }
 
 func InitBlockChain(address []byte) *BlockChain {
 	var lastHash []byte
 
-	if DBexists(constcoe.DbFile) {
+	if utils.DBexists(constcoe.DbFile) {
 		fmt.Println("blockchain already exists")
 		runtime.Goexit()
 	}
@@ -91,7 +83,7 @@ func InitBlockChain(address []byte) *BlockChain {
 	opts.Logger = nil
 
 	db, err := badger.Open(opts)
-	Handle(err)
+	utils.Handle(err)
 
 	err = db.Update(func(txn *badger.Txn) error {
 
@@ -99,24 +91,24 @@ func InitBlockChain(address []byte) *BlockChain {
 		genesis := Genesis(cbtx)
 		fmt.Println("Genesis Created")
 		err = txn.Set(genesis.Hash, genesis.Serialize())
-		Handle(err)
+		utils.Handle(err)
 		err = txn.Set([]byte("lh"), genesis.Hash)
-		Handle(err)
+		utils.Handle(err)
 		err = txn.Set([]byte("ogprevhash"), genesis.PrevHash)
-		Handle(err)
+		utils.Handle(err)
 		lastHash = genesis.Hash
 
 		return err
 
 	})
-	Handle(err)
+	utils.Handle(err)
 
 	blockchain := BlockChain{lastHash, db}
 	return &blockchain
 }
 
 func ContinueBlockChain() *BlockChain {
-	if DBexists(constcoe.DbFile) == false {
+	if utils.DBexists(constcoe.DbFile) == false {
 		fmt.Println("No blockchain found, please create one first")
 		runtime.Goexit()
 	}
@@ -126,19 +118,19 @@ func ContinueBlockChain() *BlockChain {
 	opts := badger.DefaultOptions(constcoe.DbPath)
 	opts.Logger = nil
 	db, err := badger.Open(opts)
-	Handle(err)
+	utils.Handle(err)
 
-	err = db.Update(func(txn *badger.Txn) error {
+	err = db.View(func(txn *badger.Txn) error {
 		item, err := txn.Get([]byte("lh"))
-		Handle(err)
+		utils.Handle(err)
 		err = item.Value(func(val []byte) error {
 			lastHash = val
 			return nil
 		})
-		Handle(err)
+		utils.Handle(err)
 		return err
 	})
-	Handle(err)
+	utils.Handle(err)
 
 	chain := BlockChain{lastHash, db}
 	return &chain
@@ -149,17 +141,17 @@ func (chain *BlockChain) BackOgPrevHash() []byte {
 	var ogprevhash []byte
 	err := chain.Database.View(func(txn *badger.Txn) error {
 		item, err := txn.Get([]byte("ogprevhash"))
-		Handle(err)
+		utils.Handle(err)
 
 		err = item.Value(func(val []byte) error {
 			ogprevhash = val
 			return nil
 		})
 
-		Handle(err)
+		utils.Handle(err)
 		return err
 	})
-	Handle(err)
+	utils.Handle(err)
 
 	return ogprevhash
 }
@@ -174,16 +166,16 @@ func (iterator *BlockChainIterator) Next() *Block {
 
 	err := iterator.Database.View(func(txn *badger.Txn) error {
 		item, err := txn.Get(iterator.CurrentHash)
-		Handle(err)
+		utils.Handle(err)
 
 		err = item.Value(func(val []byte) error {
 			block = Deserialize(val)
 			return nil
 		})
-		Handle(err)
+		utils.Handle(err)
 		return err
 	})
-	Handle(err)
+	utils.Handle(err)
 
 	iterator.CurrentHash = block.PrevHash
 
@@ -233,21 +225,22 @@ func (chain *BlockChain) FindUnspentTransactions(address []byte) []Transaction {
 
 }
 
-func (chain *BlockChain) FindUTXO(address []byte) []TxOutput {
-	var UTXOs []TxOutput
+func (chain *BlockChain) FindUTXO(address []byte) []UTXO {
+	var UTXOs []UTXO
 	unspentTransactions := chain.FindUnspentTransactions(address)
 	for _, tx := range unspentTransactions {
-		for _, out := range tx.Outputs {
+		for outidx, out := range tx.Outputs {
 			if out.CanBeUnlocked(Address2PubHash(address)) {
-				UTXOs = append(UTXOs, out)
+				tempUTXO := UTXO{tx.ID, outidx, out.Value}
+				UTXOs = append(UTXOs, tempUTXO)
 			}
 		}
 	}
 	return UTXOs
 }
 
-func (chain *BlockChain) FindSpendableOutputs(address []byte, amount int) (int, map[string][]int) {
-	unspentOuts := make(map[string][]int)
+func (chain *BlockChain) FindSpendableOutputs(address []byte, amount int) (int, map[string]int) {
+	unspentOuts := make(map[string]int)
 	unspentTxs := chain.FindUnspentTransactions(address)
 	accumulated := 0
 
@@ -257,11 +250,11 @@ Work:
 		for outIdx, out := range tx.Outputs {
 			if out.CanBeUnlocked(Address2PubHash(address)) && accumulated < amount {
 				accumulated += out.Value
-				unspentOuts[txID] = append(unspentOuts[txID], outIdx)
-
+				unspentOuts[txID] = outIdx
 				if accumulated >= amount {
 					break Work
 				}
+				continue Work //one transaction can only have one output fit.
 			}
 		}
 	}
@@ -292,9 +285,7 @@ func (bc *BlockChain) SignTransaction(tx *Transaction, privKey ecdsa.PrivateKey)
 	prevTXs := make(map[string]Transaction)
 	for _, input := range tx.Inputs {
 		prevTX, err := bc.FindTransaction(input.TxID)
-		if err != nil {
-			log.Panic(err)
-		}
+		utils.Handle(err)
 		prevTXs[hex.EncodeToString(prevTX.ID)] = prevTX
 	}
 	tx.Sign(privKey, prevTXs)
@@ -304,9 +295,7 @@ func (bc *BlockChain) VerifyTransaction(tx *Transaction) bool {
 	prevTXs := make(map[string]Transaction)
 	for _, input := range tx.Inputs {
 		prevTX, err := bc.FindTransaction(input.TxID)
-		if err != nil {
-			log.Panic(err)
-		}
+		utils.Handle(err)
 		prevTXs[hex.EncodeToString(prevTX.ID)] = prevTX
 	}
 

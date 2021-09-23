@@ -12,6 +12,7 @@ import (
 	"math/big"
 
 	"github.com/leo201313/Blockchain_with_Go/constcoe"
+	"github.com/leo201313/Blockchain_with_Go/utils"
 )
 
 type Transaction struct {
@@ -34,7 +35,7 @@ func CoinbaseTx(toAddress, signature, publickey []byte) *Transaction {
 
 	txOut := TxOutput{constcoe.Reward, Address2PubHash(toAddress)}
 
-	tx := Transaction{nil, []TxInput{txIn}, []TxOutput{txOut}}
+	tx := Transaction{[]byte("Base Transaction"), []TxInput{txIn}, []TxOutput{txOut}}
 
 	return &tx
 }
@@ -45,7 +46,7 @@ func (tx *Transaction) TxHash() []byte {
 
 	encoder := gob.NewEncoder(&encoded)
 	err := encoder.Encode(tx)
-	Handle(err)
+	utils.Handle(err)
 
 	hash = sha256.Sum256(encoded.Bytes())
 	return hash[:]
@@ -56,7 +57,7 @@ func (tx *Transaction) SetID() {
 }
 
 func (tx *Transaction) IsCoinbase() bool {
-	return len(tx.Inputs) == 1 && len(tx.Inputs[0].TxID) == 0 && tx.Inputs[0].Out == -1
+	return len(tx.Inputs) == 1 && tx.Inputs[0].Out == -1
 }
 
 func NewTransaction(from, to []byte, amount int, chain *BlockChain, privkey ecdsa.PrivateKey) *Transaction {
@@ -69,14 +70,11 @@ func NewTransaction(from, to []byte, amount int, chain *BlockChain, privkey ecds
 		log.Panic("Error: Not enough funds!")
 	}
 
-	for txid, outs := range validOutputs {
+	for txid, outidx := range validOutputs {
 		txID, err := hex.DecodeString(txid)
-		Handle(err)
-
-		for _, out := range outs {
-			input := TxInput{txID, out, []byte{}, from}
-			inputs = append(inputs, input)
-		}
+		utils.Handle(err)
+		input := TxInput{txID, outidx, []byte{}, from}
+		inputs = append(inputs, input)
 	}
 
 	outputs = append(outputs, TxOutput{amount, Address2PubHash(to)})
@@ -101,7 +99,7 @@ func (tx *Transaction) Sign(privKey ecdsa.PrivateKey, prevTXs map[string]Transac
 	for idx, input := range txCopy.Inputs {
 		plainhash := txCopy.PlainHash(idx, prevTXs[hex.EncodeToString(input.TxID)].Outputs[input.Out].HashPubKey) // This is because we want to sign the inputs seperately!
 		r, s, err := ecdsa.Sign(rand.Reader, &privKey, plainhash)
-		Handle(err)
+		utils.Handle(err)
 		signature := append(r.Bytes(), s.Bytes()...)
 		tx.Inputs[idx].Sig = signature
 	}
