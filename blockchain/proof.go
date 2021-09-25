@@ -7,9 +7,9 @@ import (
 	"log"
 	"math"
 	"math/big"
-)
 
-const Difficulty = 12
+	"github.com/leo201313/Blockchain_with_Go/constcoe"
+)
 
 type ProofOfWork struct {
 	Block  *Block
@@ -18,7 +18,7 @@ type ProofOfWork struct {
 
 func NewProofOfWork(b *Block) *ProofOfWork {
 	target := big.NewInt(1)
-	target.Lsh(target, uint(256-Difficulty))
+	target.Lsh(target, uint(256-constcoe.Difficulty))
 	pow := &ProofOfWork{b, target}
 	return pow
 }
@@ -38,7 +38,7 @@ func (pow *ProofOfWork) InitNonce(nonce int64) []byte {
 		pow.Block.HashTransactions(),
 		pow.Block.MTree.RootNode.Data,
 		ToHexInt(int64(nonce)),
-		ToHexInt(int64(Difficulty)),
+		ToHexInt(int64(constcoe.Difficulty)),
 	},
 		[]byte{},
 	)

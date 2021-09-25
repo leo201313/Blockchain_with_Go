@@ -10,4 +10,5 @@ const (
 	DbPath             = "./tmp/blocks"
 	DbFile             = "./tmp/blocks/MANIFEST"
 	GenesisData        = "First Transaction in Genesis"
+	Difficulty = 12
 )
