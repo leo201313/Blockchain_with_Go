@@ -188,6 +188,7 @@ func (chain *BlockChain) FindUnspentTransactions(address []byte) []Transaction {
 	spentTXNs := make(map[string][]int) // can't use type []byte as key value
 	iter := chain.Iterator()
 
+all:
 	for {
 		block := iter.Next()
 
@@ -216,12 +217,12 @@ func (chain *BlockChain) FindUnspentTransactions(address []byte) []Transaction {
 				}
 			}
 			if bytes.Equal(block.PrevHash, chain.BackOgPrevHash()) {
-				break
+				break all
 			}
 		}
-		return unspentTxs
 
 	}
+	return unspentTxs
 
 }
 
