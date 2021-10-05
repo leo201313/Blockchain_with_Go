@@ -61,6 +61,7 @@ func (tx *Transaction) IsCoinbase() bool {
 }
 
 func NewTransaction(from, to []byte, amount int, chain *BlockChain, privkey ecdsa.PrivateKey) *Transaction {
+	//This part, from should be public key!
 	var inputs []TxInput
 	var outputs []TxOutput
 

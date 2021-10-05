@@ -2,10 +2,12 @@ package blockchain
 
 import (
 	"bytes"
+	"crypto/sha256"
 	"encoding/gob"
 
 	"github.com/leo201313/Blockchain_with_Go/constcoe"
 	"github.com/leo201313/Blockchain_with_Go/utils"
+	"golang.org/x/crypto/ripemd160"
 )
 
 type TxOutput struct {
@@ -43,8 +45,8 @@ func DeserializeUTXO(data []byte) *UTXO {
 	return &utxo
 }
 
-func (in *TxInput) CanUnlock(data string) bool {
-	return bytes.Compare(in.Sig, []byte(data)) == 0
+func (in *TxInput) CanUnlock(pubHash []byte) bool {
+	return bytes.Equal(Address2PubHash(in.PubKey), pubHash)
 }
 
 func (out *TxOutput) Lock(address []byte) {
@@ -58,5 +60,14 @@ func Address2PubHash(address []byte) []byte {
 }
 
 func (out *TxOutput) CanBeUnlocked(pubkeyhash []byte) bool {
-	return bytes.Compare(out.HashPubKey, pubkeyhash) == 0
+	return bytes.Equal(out.HashPubKey, pubkeyhash)
+}
+
+func PubkeyHash(publicKey []byte) []byte {
+	hashedPublicKey := sha256.Sum256(publicKey)
+	hasher := ripemd160.New()
+	_, err := hasher.Write(hashedPublicKey[:])
+	utils.Handle(err)
+	publicRipeMd := hasher.Sum(nil)
+	return publicRipeMd
 }

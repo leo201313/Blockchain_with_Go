@@ -187,6 +187,7 @@ func (chain *BlockChain) FindUnspentTransactions(address []byte) []Transaction {
 
 	spentTXNs := make(map[string][]int) // can't use type []byte as key value
 	iter := chain.Iterator()
+	pubhash := Address2PubHash(address)
 
 all:
 	for {
@@ -204,24 +205,22 @@ all:
 						}
 					}
 				}
-				if out.CanBeUnlocked(Address2PubHash(address)) {
+				if out.CanBeUnlocked(pubhash) {
 					unspentTxs = append(unspentTxs, *tx)
 				}
 			}
 			if !tx.IsCoinbase() {
 				for _, in := range tx.Inputs {
-					if in.CanUnlock(string(address)) {
+					if in.CanUnlock(pubhash) {
 						inTxID := hex.EncodeToString(in.TxID)
 						spentTXNs[inTxID] = append(spentTXNs[inTxID], in.Out)
 					}
 				}
 			}
-
 		}
 		if bytes.Equal(block.PrevHash, chain.BackOgPrevHash()) {
 			break all
 		}
-
 	}
 	return unspentTxs
 

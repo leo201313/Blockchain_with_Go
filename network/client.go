@@ -15,9 +15,7 @@ import (
 func StartClient() {
 	exitFlag := false
 	if !exitFlag {
-
 	}
-
 }
 
 func sendVersion(conn net.Conn, addr string) {
