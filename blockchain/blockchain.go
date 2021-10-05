@@ -216,9 +216,10 @@ all:
 					}
 				}
 			}
-			if bytes.Equal(block.PrevHash, chain.BackOgPrevHash()) {
-				break all
-			}
+
+		}
+		if bytes.Equal(block.PrevHash, chain.BackOgPrevHash()) {
+			break all
 		}
 
 	}
