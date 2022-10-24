@@ -1,6 +1,8 @@
 # Blockchain_with_Go
 **Use golang to reproduce the basic blockchain**
 
+Here is a tutorial to realize a simple basic [blockchain using golang](https://www.krad.top/goblockchain01/). Any you'll find much more systematical and clear codes at [here](https://github.com/leo201313/goblockchain_tutorial).
+
 ### Update Panel
 * V0.1 No transactions but noly blocks are allowed.
 * V0.5 Transactions are now supported. One block can have multiple transactions.
